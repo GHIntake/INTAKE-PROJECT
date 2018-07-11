@@ -14,6 +14,7 @@ url = "http://www.ticketmonster.co.kr/deal/465447106?keyword=%EC%9D%B8%ED%85%8C%
 productCode = 000
 ##################################################
 
+
 driver = webdriver.Chrome("chromedriver.exe")
 driver.get(url)
 driver.implicitly_wait(10)
