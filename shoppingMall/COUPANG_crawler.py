@@ -5,21 +5,21 @@ from bs4 import BeautifulSoup
 import time
 
 
-keyword = "랩노쉬"
+keyword = "인테이크"
 
-driver = webdriver.Chrome('chromedriver.exe')
+driver = webdriver.Chrome('C:/Users/renz/Desktop/INTAKE-PROJECT/shoppingMall/chromedriver.exe')
 driver.implicitly_wait(3)
-driver.get("http://www.coupang.com/")
+driver.get("http://www.daum.net/")
 driver.implicitly_wait(3)
 
 driver.find_element_by_name("q").send_keys(keyword)
-driver.find_element_by_xpath('//*[@id="headerSearchBtn"]').click()
-
+driver.find_element_by_xpath('//*[@id="daumSearch"]/fieldset/div/div/button[2]').click()
+driver.find_element_by_xpath('//*[@id="blogExtMore"]/span').click()
 
 page = requests.get(driver.current_url)
 soup = BeautifulSoup(page.content, 'html.parser')
 
-product_list_tag = soup.find('ul', id = 'productList', class_ = "search-product-list")
+blog_list_tag = soup.findAll('a', class_ = "f_link_b")
 
 product_ids = [k.strip() for k in str(product_list_tag).split('[')[1].split(']')[0].split(',')]
 
