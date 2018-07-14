@@ -19,12 +19,12 @@ import copy
 import pandas as pd
 
 class Social_analysis():
-
+    
     non_bmp_map = dict.fromkeys(range(0x10000, sys.maxunicode + 1), 0xfffd)
 
     def __init__(self):
         self.twitter = Twitter()
-
+    
     def DB_to_table(self, DBname='intake', keyword='intake'):
         import pymssql
         import pandas.io.sql as pdsql
@@ -38,8 +38,8 @@ class Social_analysis():
         # df['main_text'] = df.main_text.apply(lambda x: x.replace('#',' ').translate(self.non_bmp_map))
         # df['created_at'] = df.created_at.apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
         conn.close()
-        self.raw_data = df.as_matrix()
-
+        self.raw_data = df.as_matrix()        
+    
     def pickle_to_table(self, filename):
         with open(filename, 'rb') as f:
             data = pickle.load(f)
@@ -49,14 +49,14 @@ class Social_analysis():
             data[idx][3] = '/'.join(i[3])
             data[idx][4] = '/'.join(i[4])
         self.raw_data = np.array(data)
-
-    def hashtags_split(self, hashtags):
+  
+    def hashtags_split(self, hashtags):        
         hashtags_split = []
         for i in hashtags:
             hashtags_split.append(i.split('/'))
-
+        
         hashtags_list = []
-
+        
         for i in hashtags_split:
             temp = []
             for j in i:
@@ -65,24 +65,24 @@ class Social_analysis():
                     temp.append(t_hashtags)
             hashtags_list.append(temp)
         self.hashtags_list = hashtags_list
-
+        
         return hashtags_list
-
+                    
     def add_keyword_dic(self, keyword_list, tag='Noun'):
         for i in keyword_list:
             if type(i) == tuple:
                 self.twitter.add_dictionary(i[0], i[1])
             else:
                 self.twitter.add_dictionary(i, tag)
-
+        
     def morph_pos(self, text_list, exception_list = ['맛', '밥', '물', '몸']):
-
+        
         morph_list = []
         noun_list = []
         adj_list = []
         verb_list = []
         nav_list = []
-
+        
         for j in text_list:
             parsed = self.twitter.pos(j)
             temp = []
@@ -90,7 +90,7 @@ class Social_analysis():
             adj_temp = []
             verb_temp = []
             nav_temp = []
-
+            
             for i in parsed:
                 if self.isHangul(i[0]):
                     if ((len(i[0]) > 1) or (i[0] in exception_list)):
@@ -107,7 +107,7 @@ class Social_analysis():
                     else:
                         print('{} 제외'.format(i[0]))
                 else: print('{} 한글이 아님.'.format(i[0]))
-
+            
 
             morph_list.append(temp)
             noun_list.append(n_temp)
@@ -118,14 +118,14 @@ class Social_analysis():
         return morph_list, nav_list, noun_list, adj_list, verb_list
 
 
-
+    
     def pos_extractor(self, parsed):
 
         noun_list = []
         adj_list = []
         verb_list = []
         nav_list = []
-        for i in parsed:
+        for i in parsed:            
             n_temp = []
             adj_temp = []
             verb_temp = []
@@ -144,32 +144,32 @@ class Social_analysis():
                 else:
                     print('{} 제외'.format(i[0]))
             else: print('{} 한글이 아님.'.format(i[0]))
-
+            
             noun_list.append(n_temp)
             adj_list.append(adj_temp)
             verb_list.append(verb_temp)
             nav_list.append(nav_temp)
-
+            
         return nav_list, noun_list, adj_list, verb_list
 
-
-
+    
+    
     def merge_list(self, tokenized_list):
         return [j for i in tokenized_list for j in i]
 
-
+    
     def join_list(self, tokenized_list):
         joined_list = []
         for idx, i in enumerate(tokenized_list):
             joined_list.append(" ".join(i))
         return joined_list
-
+ 
     def split_list(self, untokenized_list):
         hashtag_splited = []
         for idx, i in enumerate(untokenized):
             hashtag_splited.append(i.split('/'))
             return hastag_splited
-
+        
     def join_underbar(self, morph_list):
 
         all_list = []
@@ -178,9 +178,9 @@ class Social_analysis():
             for j in i:
                 post_list.append(j[0]+'_'+j[1])
             all_list.append([(' , ').join(post_list)])
-            post_list=[]
+            post_list=[] 
         all_list=np.array(all_list)
-
+        
         return all_list
 
     def word_substitute(self, dataset, sublist):
@@ -197,7 +197,7 @@ class Social_analysis():
         gc.collect()
 
         return dataset
-
+    
     def word_delete(self, dataset, del_list):
         dataset = copy.deepcopy(dataset)
 
@@ -206,12 +206,12 @@ class Social_analysis():
 
         return dataset
 
-
+    
     def isHangul(self, text):
         encText = text
         hanCount = len(re.findall(u'[\u3130-\u318F\uAC00-\uD7A3]+', encText))
         return hanCount > 0
-
+    
     def convert_list(self, *tokenized_list):
         input_length = len(tokenized_list)
         lists = [[] for i in range(input_length)]
@@ -232,27 +232,47 @@ class Social_analysis():
     def make_df(self, converted_array):
         df = pd.DataFrame(np.hstack((intake.raw_data[:,:3], converted_array, intake.raw_data[:, 3:])), index=None)
         return df
+    
+    # 키워드 리스트 중 하나라도 있는 경우
+    def word_check_or(self, text, keywords):
+        if any(word in text for word in keywords): return True
+        else: return False
+
+    # 키워드 리스트에 있는 단어가 모두 있는 경우
+    def word_check_and(self, text, keywords):
+        if all(word in text for word in keywords): return True
+        else: return False
 
 
-class SB_Word2Vec():
+    def word_check(self, method='and', keywords=[], df = None, column_name = None, filter_TF=True):
+        if method == 'and':
+            df['flag'] = df[column_name].apply(lambda x: self.word_check_and(x, keywords))
+            return df[df.flag==filter_TF]
 
+        if method == 'or':
+            df['flag'] = df[column_name].apply(lambda x: self.word_check_or(x, keywords))
+            return df[df.flag==filter_TF]
+
+
+class SB_Word2Vec():    
+    
     def __init__(self, morph_list):
         self.dct = Dictionary(morph_list)
         self.corpus = [self.dct.doc2bow(line) for line in morph_list]
         self.build_Word2Vec(morph_list)
-
+    
     def make_Word2Vec(self, morph_list, size=50, window=2, min_count=10, iteration=100):
         self.em = Word2Vec(morph_list, size=size, window=window, min_count=min_count, iter=iteration)
         self.em_vocab = list(self.em.wv.vocab.keys())
         self.em_vocab_dic = {word:idx for idx, word in enumerate(self.em_vocab)}
 
-    def make_Word2Sen_matrix(self):
+    def make_Word2Sen_matrix(self): 
         vocab_size = len(self.em_vocab)
         self.sen_matrix = np.zeros((len(self.corpus), vocab_size))
         for idx, row in enumerate(self.sen_matrix):
             for idx2, frequency in self.corpus[idx]:
                     if self.dct[idx2] in self.em_vocab:
-                        self.sen_matrix[idx][self.em_vocab_dic[self.dct[idx2]]] = frequency
+                        self.sen_matrix[idx][self.em_vocab_dic[self.dct[idx2]]] = frequency                
         self.sim_matrix = np.zeros((vocab_size, vocab_size))
         for idx, w1 in enumerate(self.em_vocab):
             for idx2, w2 in enumerate(self.em_vocab):
@@ -267,20 +287,20 @@ class SB_Word2Vec():
         self.most_sim_sen_index = np.argmax(self.word2sen_matrix[self.em_vocab_dic[keyword]])
         index_list = self.sim_sen_index.reshape((-1,)).tolist()
         index_list.reverse()
-
+        
         for idx, i in enumerate(index_list[:number]):
             print(str(idx + 1))
             print(main_text[i])
         return index_list
-
+    
     def build_Word2Vec(self, morph_list):
         self.make_Word2Vec(morph_list)
         self.make_Word2Sen_matrix()
-
-
+        
+        
 class SB_LDA():
 
-    def make_lda(self, morph_joined, ntopic=10, learning_method='batch', max_iter=25, random_state=0, n_words=20):
+    def make_lda(self, morph_joined, ntopic=10, learning_method='batch', max_iter=25, random_state=0, n_words=20):        
         self.vect = CountVectorizer(max_features=10000, max_df=.15)
         self.X = self.vect.fit_transform(morph_joined)
         self.lda = LatentDirichletAllocation(n_components=ntopic, learning_method=learning_method, max_iter=max_iter, random_state=random_state)
@@ -298,24 +318,24 @@ class SB_LDA():
             related_docs.append((i, main_text_list[i]))
         return related_docs
 
-class SB_Tfidf():
-
+class SB_Tfidf():    
+    
     def __init__(self, list_morph_merged):
         self.list_morph_merged = list_morph_merged
         self.dct = Dictionary(self.list_morph_merged)
         self.corpus = [self.dct.doc2bow(line) for line in self.list_morph_merged]
 
-    def get_tfidf(self):
+    def get_tfidf(self):       
         self.model = TfidfModel(self.corpus)
         self.tfidf = []
         for i in self.corpus:
              self.tfidf.append(sorted(self.model[i], key = lambda x: x[1], reverse=True))
         self.tfidf_hangul = []
         for idx1, i in enumerate(self.tfidf):
-            self.tfidf_hangul.append([(self.dct[j[0]], j[1]) for j in i])
-
+            self.tfidf_hangul.append([(self.dct[j[0]], j[1]) for j in i])        
+        
         return self.tfidf_hangul
-
+    
 def frequency(merged):
     word_count = Counter(merged)
     word_count2 = []
