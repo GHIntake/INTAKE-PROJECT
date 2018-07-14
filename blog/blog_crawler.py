@@ -9,6 +9,8 @@ import time
 from selenium.common.exceptions import NoSuchElementException
 import pandas as pd
 import requests
+import pymssql
+
 
 driver = webdriver.Chrome('/Users/renz/Downloads/chromedriver_win32/chromedriver.exe')
 driver.set_window_size(1800, 1000)
@@ -17,7 +19,7 @@ driver.get('https://search.naver.com/search.naver?sm=tab_hty.top&where=post&quer
 
 total_blog = pd.DataFrame()
 
-for i in range(2):
+for i in range(100):
     
     post_links = driver.find_elements_by_css_selector('#elThumbnailResultArea > li > dl > dt > a')
     for i in post_links:
@@ -68,5 +70,35 @@ for i in range(2):
     nextbutton.click()
 
 total_blog = total_blog[['keyword', 'created_at', 'post_name', 'main_text', 'current_url']]
+# print(total_blog)
 
-print(total_blog)
+def datetime(x):
+    y = x.split('. ')
+    if len(y[1])==1:
+        y[1] = '0'+y[1]
+    if len(y[2])==1:
+        y[2] = '0'+y[2]
+    ysplited = y[3].split(':')
+    for i in range(2):
+        if len(ysplited[i]) ==1:
+            ysplited[i] = '0' + ysplited[i]
+    y[3] = ysplited[0] + ":" + ysplited[1]
+    z = y[0]+'-'+y[1]+'-'+y[2]+' '+ y[3]
+    return z
+
+total_blog['created_at'] = total_blog['created_at'].apply(datetime)
+
+# executemany를 사용하기 위해 각 row를 튜플로 변경해서 data라는 리스트에 할당
+data = total_blog.values.tolist()
+data = [tuple(lst) for lst in data]
+
+# 데이터베이스에 연결
+conn = pymssql.connect("intakedb.c63elkxbiwfc.us-east-2.rds.amazonaws.com:1433", "gh", "ghintake", "intake")
+cursor = conn.cursor()
+
+# 데이터베이스에 insert
+cursor.executemany("insert into NaverBlogReview values(%s, %s, %s, %s, %s)", data)
+
+# 최종 commit
+conn.commit()
+conn.close()
