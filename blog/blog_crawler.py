@@ -106,9 +106,6 @@ total_blog = total_blog[['keyword', 'created_at', 'post_name', 'main_text', 'cur
 # 데이터베이스에 insert
 
 # 최종 commit
-<<<<<<< HEAD
-conn.commit()
-conn.close()
 =======
 
 conn.close()
