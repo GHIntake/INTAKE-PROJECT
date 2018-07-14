@@ -4,10 +4,9 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
 
-
 keyword = "랩노쉬"
 
-driver = webdriver.Chrome('chromedriver.exe')
+driver = webdriver.Chrome('/Users/renz/Downloads/chromedriver_win32/chromedriver.exe')
 driver.implicitly_wait(3)
 driver.get("http://www.coupang.com/")
 driver.implicitly_wait(3)
@@ -141,6 +140,7 @@ c = []
 d = []
 e = []
 f = []
+
 
 
 for product in total_review:
