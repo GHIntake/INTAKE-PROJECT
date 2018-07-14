@@ -4,22 +4,21 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
 
+keyword = "랩노쉬"
 
-keyword = "인테이크"
-
-driver = webdriver.Chrome('C:/Users/renz/Desktop/INTAKE-PROJECT/shoppingMall/chromedriver.exe')
+driver = webdriver.Chrome('/Users/renz/Downloads/chromedriver_win32/chromedriver.exe')
 driver.implicitly_wait(3)
-driver.get("http://www.daum.net/")
+driver.get("http://www.coupang.com/")
 driver.implicitly_wait(3)
 
 driver.find_element_by_name("q").send_keys(keyword)
-driver.find_element_by_xpath('//*[@id="daumSearch"]/fieldset/div/div/button[2]').click()
-driver.find_element_by_xpath('//*[@id="blogExtMore"]/span').click()
+driver.find_element_by_xpath('//*[@id="headerSearchBtn"]').click()
+
 
 page = requests.get(driver.current_url)
 soup = BeautifulSoup(page.content, 'html.parser')
 
-blog_list_tag = soup.findAll('a', class_ = "f_link_b")
+product_list_tag = soup.find('ul', id = 'productList', class_ = "search-product-list")
 
 product_ids = [k.strip() for k in str(product_list_tag).split('[')[1].split(']')[0].split(',')]
 
@@ -141,6 +140,7 @@ c = []
 d = []
 e = []
 f = []
+
 
 
 for product in total_review:

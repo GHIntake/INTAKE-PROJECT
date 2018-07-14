@@ -8,6 +8,7 @@ from selenium import webdriver
 import time
 from selenium.common.exceptions import NoSuchElementException
 import pandas as pd
+import requests
 
 driver = webdriver.Chrome('/Users/renz/Downloads/chromedriver_win32/chromedriver.exe')
 driver.set_window_size(1800, 1000)
@@ -19,7 +20,6 @@ total_blog = pd.DataFrame()
 for i in range(2):
     
     post_links = driver.find_elements_by_css_selector('#elThumbnailResultArea > li > dl > dt > a')
-
     for i in post_links:
         try:
             temp_row = {'keyword':'intake', 'created_at': None, 'post_name': None, 'main_text':None, 'current_url':None}
@@ -27,15 +27,31 @@ for i in range(2):
             driver.switch_to.window(driver.window_handles[1])
             time.sleep(3)
             driver.switch_to.frame(driver.find_element_by_css_selector('#mainFrame'))
+            blog_post_name = driver.find_element_by_css_selector('div:nth-child(3) > div > div > div.pcol1 > div.se_editArea > div > div > div > h3')
+            post_name = blog_post_name.text.strip()
             maintext = driver.find_element_by_css_selector('div.se_doc_viewer > div.se_component_wrap.sect_dsc.__se_component_area')
             sentences = maintext.text.strip()
+            blog_created_at = driver.find_element_by_css_selector('div:nth-child(3) > div > div > div.se_container > span')
+            created_at = blog_created_at.text.strip()
+            page = driver.current_url
+            blog_current_url = driver.current_url
+            #blog_current_url = driver.find_element_by_css_selector('#body > script:nth-child(5)')
+
+#            current_url = blog_current_url.text.strip()
+
+            print(post_name)
             print(sentences)
+            print(created_at)
+            print(blog_current_url)
+
             driver.close()
             driver.switch_to.window(driver.window_handles[0])
-            temp_row['created_at'] = '2018-01-01'
-            temp_row['post_name'] = 'postname'
+            temp_row['post_name'] = post_name
+            temp_row['created_at'] = created_at
             temp_row['main_text'] = sentences
-            temp_row['current_url'] = 'this is current url'
+            temp_row['current_url'] = blog_current_url
+
+            print(temp_row)
 
             total_blog = total_blog.append(temp_row, ignore_index=True)
 
