@@ -16,6 +16,10 @@ from ckonlpy.tag import Twitter
 import numpy as np
 import gc
 import copy
+import pymssql
+import pandas.io.sql as pdsql
+import pandas as pd
+
 
 class Social_analysis():
     
@@ -33,24 +37,36 @@ class Social_analysis():
             data[idx][3] = '/'.join(i[3])
             data[idx][4] = '/'.join(i[4])
         self.raw_data = np.array(data)
-  
-    def hashtags_split(self, hashtags):        
-        hashtags_split = []
-        for i in hashtags:
-            hashtags_split.append(i.split('/'))
-        
-        hashtags_list = []
-        
-        for i in hashtags_split:
-            temp = []
-            for j in i:
-                if self.isHangul(j):
-                    t_hashtags = j.translate(self.non_bmp_map)
-                    temp.append(t_hashtags)
-            hashtags_list.append(temp)
-        self.hashtags_list = hashtags_list
-        
-        return hashtags_list
+
+    def DB_to_table(self, DBname='intake', keyword='intake'):
+        self.query = \
+        """
+        SELECT keyword, created_at, post_name, main_text, current_url FROM NaverBlogReview WHERE keyword = '{}'
+        """.format(keyword)
+        conn = pymssql.connect("intakedb.c63elkxbiwfc.us-east-2.rds.amazonaws.com:1433", "gh", "ghintake", DBname)
+        df = pdsql.read_sql_query(self.query, con=conn)
+        # df['main_text'] = df.main_text.apply(lambda x: x.replace('#',' ').translate(self.non_bmp_map))
+        # df['created_at'] = df.created_at.apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
+        conn.close()
+        self.raw_data = df.as_matrix()
+
+    # def hashtags_split(self, hashtags):
+    #     hashtags_split = []
+    #     for i in hashtags:
+    #         hashtags_split.append(i.split('/'))
+    #
+    #     hashtags_list = []
+    #
+    #     for i in hashtags_split:
+    #         temp = []
+    #         for j in i:
+    #             if self.isHangul(j):
+    #                 t_hashtags = j.translate(self.non_bmp_map)
+    #                 temp.append(t_hashtags)
+    #         hashtags_list.append(temp)
+    #     self.hashtags_list = hashtags_list
+    #
+    #     return hashtags_list
                     
     def add_keyword_dic(self, keyword_list, tag='Noun'):
         for i in keyword_list:
