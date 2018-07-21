@@ -11,17 +11,6 @@ import pandas as pd
 import requests
 import pymssql
 
-
-driver = webdriver.Chrome('/Users/renz/Downloads/chromedriver_win32/chromedriver.exe')
-driver.set_window_size(1800, 1000)
-driver.maximize_window()
-driver.get('https://search.naver.com/search.naver?sm=tab_hty.top&where=post&query=%EC%9D%B8%ED%85%8C%EC%9D%B4%ED%81%AC+-%EC%97%94%EC%A7%84+-%EC%9E%A5%EC%B0%A9+-%ED%81%AC%EB%A6%AC%EB%8B%9D+-%ED%81%B4%EB%A6%AC%EB%8B%9D+-%ED%9D%A1%EA%B8%B0+-RTA&oquery=%EC%9D%B8%ED%85%8C%EC%9D%B4%ED%81%AC+-%EC%97%94%EC%A7%84+-%EC%83%B5%EC%9D%B8%ED%85%8C%EC%9D%B4%ED%81%AC+-%EC%9E%A5%EC%B0%A9+-%ED%81%AC%EB%A6%AC%EB%8B%9D+-%ED%81%B4%EB%A6%AC%EB%8B%9D+-%ED%9D%A1%EA%B8%B0+-RTA&tqi=T0N22lpySDossv%2BgWqRssssstid-426222')
-
-
-
-#conn = pymssql.connect("intakedb.c63elkxbiwfc.us-east-2.rds.amazonaws.com:1433", "gh", "ghintake", "intake")
-#cursor = conn.cursor()
-
 def datetime(x):
     # if len(x)<=7:
     #     return datetime.datime.now()
@@ -38,30 +27,37 @@ def datetime(x):
     z = y[0]+'-'+y[1]+'-'+y[2]+' '+ y[3]
     return z
 
+driver = webdriver.Chrome('/Users/renz/Downloads/chromedriver_win32/chromedriver.exe')
+driver.set_window_size(1800, 1000)
+driver.maximize_window()
+driver.get('https://search.naver.com/search.naver?date_from=&date_option=0&date_to=&dup_remove=1&nso=&post_blogurl=&post_blogurl_without=&query=%EC%A0%95%EA%B4%80%EC%9E%A5%20%EC%97%90%EB%B8%8C%EB%A6%AC%ED%83%80%EC%9E%84&sm=tab_pge&srchby=all&st=sim&where=post&start=841')
+
+conn = pymssql.connect("intakedb.c63elkxbiwfc.us-east-2.rds.amazonaws.com:1433", "gh", "ghintake", "intake")
+cursor = conn.cursor()
+
 date_need_preprocessing = pd.DataFrame()
 
 ##  blog.me는 형식이 다 달라서 안 되겠다 때려친다!
 
-for j in range(2):
+for j in range(84,100):
     total_blog = pd.DataFrame()
     post_links = driver.find_elements_by_css_selector('#elThumbnailResultArea > li > dl > dt > a')
     for i in post_links:
         try:
-            temp_row = {'keyword':'intake', 'created_at': None, 'post_name': None, 'main_text':None, 'current_url':None}
+            temp_row = {'keyword':'KGC', 'created_at': None, 'post_name': None, 'main_text':None, 'current_url':None}
             i.click()
             driver.switch_to.window(driver.window_handles[1])
             time.sleep(3)
-            driver.switch_to.frame(driver.find_element_by_css_selector('#ScreenFrame')) #blog.naver.com : #mainFrame
-            blog_post_name = driver.find_element_by_css_selector('div:nth-child(3) > div > div.se_sectionArea.is-fill.se_align-left > div.pcol1 > div.se_editArea > div > div > div > h3') #blog.naver.com : 'div:nth-child(3) > div > div > div.pcol1 > div.se_editArea > div > div > div > h3'
+            driver.switch_to.frame(driver.find_element_by_css_selector('#mainFrame'))
+            blog_post_name = driver.find_element_by_css_selector('div:nth-child(3) > div > div > div.pcol1 > div.se_editArea > div > div > div > h3')
             post_name = blog_post_name.text.strip()
-            maintext = driver.find_element_by_css_selector('div.se_component_wrap.sect_dsc.__se_component_area') #blog.naver.com : div.se_doc_viewer > div.se_component_wrap.sect_dsc.__se_component_area
+            maintext = driver.find_element_by_css_selector('div.se_doc_viewer > div.se_component_wrap.sect_dsc.__se_component_area')
             sentences = maintext.text.strip()
-            blog_created_at = driver.find_element_by_css_selector('div:nth-child(3) > div > div.se_sectionArea.is-fill.se_align-left > div.se_container > span') #blog.naver.com : div:nth-child(3) > div > div > div.se_container > span
+            blog_created_at = driver.find_element_by_css_selector('div:nth-child(3) > div > div > div.se_container > span')
             created_at = blog_created_at.text.strip()
-            page = driver.current_url
+#            page = driver.current_url
             blog_current_url = driver.current_url
-            #blog_current_url = driver.find_element_by_css_selector('#body > script:nth-child(5)')
-
+#            blog_current_url = driver.find_element_by_css_selector('#body > script:nth-child(5)')
 #            current_url = blog_current_url.text.strip()
 
             print(post_name)
@@ -69,8 +65,6 @@ for j in range(2):
             print(created_at)
             print(blog_current_url)
 
-            driver.close()
-            driver.switch_to.window(driver.window_handles[0])
             temp_row['post_name'] = post_name
             temp_row['created_at'] = created_at
             temp_row['main_text'] = sentences
@@ -83,10 +77,15 @@ for j in range(2):
             else:
                 total_blog = total_blog.append(temp_row, ignore_index=True)
 
+            driver.close()
+            driver.switch_to.window(driver.window_handles[0])
+
         except NoSuchElementException:
             driver.close()
             driver.switch_to.window(driver.window_handles[0])
             pass
+
+
 
         if i ==4:
             driver.execute_script("window.scrollTo(0,document.body.scrollHeight);")
@@ -124,7 +123,7 @@ cursor = conn.cursor()
 
 data = date_need_preprocessing.values.tolist()
 data = [tuple(lst) for lst in data]
-cursor.executemany("insert into NaverBlogReview (keyword, created_at, post_name, main_text, current_url) values(%s, %s, %s, %s, %s)", data)
+cursor.executemany("insert into labnsohNaverBlogReview (keyword, created_at, post_name, main_text, current_url) values(%s, %s, %s, %s, %s)", data)
 conn.commit()
 
 conn.close()
