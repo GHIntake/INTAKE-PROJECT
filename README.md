@@ -30,6 +30,7 @@ The project was conducted in two parts, textming and log data anlysis.
    - social_analysis.ipynb: textmining file using konlpy library for jupyter notebook
    - social_analysis.py: textmining file for python idle
    - tutorial_social_analysis.ipynb: tutorial version of social_analysis.ipynb 
+   
 **blog:** 
    - blog_crawler.py: Naver Blog cralwer
    - blog_crawler.ipynb: Naver Blog cralwer for Jupyter Notebook
