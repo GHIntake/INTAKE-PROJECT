@@ -20,9 +20,9 @@ The project was conducted in two parts, textming and log data anlysis.
 - Derive insights that can be useful for product improvement and marketing 
 
 
-## Explanation of folder and file inside.
+## Explanation of folder and file inside
 
-**1. Instagram:** 
+**Instagram:** 
    - insta_crawling.ipynb: crawler to collect instagram posting for jupyter notebook 
    - make_mecab_dic.ipynb: New version of social_analysis.ipynb using mecab library for jupyter notebook
    - social_analysis.ipynb: textmining file using konlpy library for jupyter notebook
