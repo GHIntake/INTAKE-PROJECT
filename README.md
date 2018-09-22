@@ -2,6 +2,8 @@
 
 Repository for project collaborated with CMR(Convenient Meal Replacement) company 'Intake' with Growth Hackers(SNU business data analysis academic society) members. 
 
+  See more about Growth Hackers: <http://ghmkt.kr/>
+
 ## Purpose
 The project was conducted in two parts, textming and log data anlysis. 
 
